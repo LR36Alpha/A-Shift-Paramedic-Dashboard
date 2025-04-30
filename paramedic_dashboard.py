@@ -66,18 +66,51 @@ fig_compliance = px.bar(
 fig_compliance.update_layout(xaxis_tickangle=45)
 st.plotly_chart(fig_compliance, use_container_width=True)
 
-import plotly.express as px
+# Manual Audit Chart: Add below your filtered DataFrames and above the last chart
+import plotly.graph_objects as go
 
-# Assuming 'df_manual_audit' is your DataFrame containing manual audit data
-fig_manual_audit = px.bar(
-    df_manual_audit,
-    x="Paramedic",
-    y="Audit Outcome Count",
-    color="Audit Outcome",
-    title="Manual Audit Outcomes by Paramedic"
+# Manual Audit DataFrame
+df_manual_audit = pd.DataFrame({
+    "Paramedic": [
+        "Joshua Salas", "Courtney Rieke", "Levi McGinnis", "Jake Dawson",
+        "Kyle Schlatterer", "Joshua Jacobs", "Reuben Ortiz", "Cameron Conte",
+        "Derek Twardowski", "Joseph Katsiyannis"
+    ],
+    "Minimal to No Vitals": [21, 13, 18, 5, 12, 11, 9, 9, 7, 7],
+    "1 Vital Set": [1, 3, 0, 6, 0, 2, 1, 1, 0, 0],
+    "2 Vital Sets": [1, 3, 1, 6, 3, 2, 1, 1, 3, 2]
+})
+
+# Filter only paramedics in current selection
+df_audit_filtered = df_manual_audit[df_manual_audit["Paramedic"].isin(df_calls["Paramedic"])]
+
+# Manual Audit Stacked Bar Chart
+fig_audit = go.Figure()
+fig_audit.add_trace(go.Bar(
+    x=df_audit_filtered["Paramedic"],
+    y=df_audit_filtered["Minimal to No Vitals"],
+    name="Minimal to No Vitals",
+    marker_color="orangered"
+))
+fig_audit.add_trace(go.Bar(
+    x=df_audit_filtered["Paramedic"],
+    y=df_audit_filtered["1 Vital Set"],
+    name="1 Vital Set",
+    marker_color="dodgerblue"
+))
+fig_audit.add_trace(go.Bar(
+    x=df_audit_filtered["Paramedic"],
+    y=df_audit_filtered["2 Vital Sets"],
+    name="2 Vital Sets",
+    marker_color="mediumseagreen"
+))
+fig_audit.update_layout(
+    barmode="stack",
+    title="Manual Audit Outcomes by Paramedic",
+    yaxis_title="Audited Calls",
+    xaxis_tickangle=45
 )
-fig_manual_audit.update_layout(xaxis_tickangle=45)
-st.plotly_chart(fig_manual_audit, use_container_width=True)
+st.plotly_chart(fig_audit, use_container_width=True)
 
 # Monthly View
 fig_month = px.bar(
