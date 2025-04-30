@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 # Title
-st.title("🚑 Paramedic Performance Dashboard")
+st.title("🚒 Paramedic Performance Dashboard")
 st.markdown("This dashboard visualizes refusal-of-care vitals compliance performance across paramedics.")
 
 st.markdown("⚠️ **Reminder**: Every refusal should include *two complete sets of vitals* unless explicitly refused by the patient. In those cases, refusal should be clearly documented.")
@@ -82,7 +82,6 @@ fig2 = go.Figure()
 fig2.add_trace(go.Bar(x=df_pass['Paramedic'], y=df_pass['Raw Pass Rate'], name='Raw Pass Rate', marker_color='crimson'))
 fig2.add_trace(go.Bar(x=df_pass['Paramedic'], y=df_pass['Adjusted Pass Rate'], name='Adjusted Pass Rate', marker_color='seagreen'))
 fig2.update_layout(barmode='group', title='Raw vs Adjusted Pass Rates', yaxis_title='Pass Rate (%)', xaxis_tickangle=45)
-fig2.add_annotation(x='Joshua Salas', y=35.48, text="⬅️ Coached 3/15", showarrow=True, arrowhead=1)
 st.plotly_chart(fig2, use_container_width=True)
 
 # Monthly trend
@@ -98,9 +97,18 @@ fig4.add_trace(go.Bar(x=df_audit['Paramedic'], y=df_audit['2 Vital Sets'], name=
 fig4.update_layout(barmode='stack', title='Manual Audit Results', yaxis_title='Audited Calls', xaxis_tickangle=45)
 st.plotly_chart(fig4, use_container_width=True)
 
-# Compliance Score
-fig5 = px.bar(df_compliance, x='Paramedic', y='Compliance Score', color='Compliance Score', color_continuous_scale='Teal')
-fig5.update_layout(title='Overall Compliance Score')
+# Compliance Score – Sorted with Custom Color Gradient
+df_compliance_sorted = df_compliance.sort_values(by='Compliance Score', ascending=False)
+
+fig5 = px.bar(
+    df_compliance_sorted,
+    x='Paramedic',
+    y='Compliance Score',
+    color='Compliance Score',
+    color_continuous_scale=['navy', 'skyblue', 'yellow', 'orangered', 'red'],
+    title='Overall Compliance Score (Best → Worst)'
+)
+fig5.update_layout(xaxis_tickangle=45)
 st.plotly_chart(fig5, use_container_width=True)
 
 # Download
