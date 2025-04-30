@@ -1,10 +1,27 @@
 import streamlit as st
-import matplotlib.pyplot as plt
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
 import numpy as np
 
-st.title("Paramedic Performance Overview: Vital Sign Acquisition in Refusal Calls")
+# Page config
+st.set_page_config(
+    page_title="Paramedic Refusal Compliance Dashboard",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Data
+# Title
+st.title("🚑 Paramedic Performance Dashboard")
+st.markdown("""
+This dashboard visualizes refusal-of-care vitals compliance performance across paramedics.
+You can explore trends in pass rates, audit outcomes, and overall compliance scores.
+""")
+
+# Sidebar
+st.sidebar.header("🔍 Filter Options")
+
+# Load static data
 paramedics = ['Cameron Conte', 'Levi McGinnis', 'Jake Dawson', 'Joshua Salas', 
               'Courtney Rieke', 'Kyle Schlatterer', 'Reuben Ortiz', 'Joshua Jacobs', 'Derek Twardowski']
 calls = [55, 45, 35, 31, 27, 27, 25, 24, 16]
@@ -22,64 +39,65 @@ monthly_rates = {
     'Derek Twardowski': [50.00, 33.33, 33.33]
 }
 audit_paramedics = ['Joshua Salas', 'Courtney Rieke', 'Levi McGinnis', 'Jake Dawson', 
-                   'Kyle Schlatterer', 'Joshua Jacobs', 'Reuben Ortiz', 'Cameron Conte', 
-                   'Derek Twardowski', 'Joseph Katsiyannis']
+                    'Kyle Schlatterer', 'Joshua Jacobs', 'Reuben Ortiz', 'Cameron Conte', 
+                    'Derek Twardowski', 'Joseph Katsiyannis']
 minimal = [21, 13, 18, 5, 12, 11, 9, 9, 7, 7]
 one_set = [1, 3, 0, 6, 0, 2, 1, 1, 0, 0]
 two_sets = [1, 3, 1, 6, 3, 2, 1, 1, 3, 2]
 compliance_scores = [74.55, 65, 62, 55, 60, 59, 50, 53, 54]
 
-# Chart 1: Total Call Volume
-fig1, ax1 = plt.subplots(figsize=(10, 6))
-ax1.bar(paramedics, calls, color='skyblue')
-ax1.set_title('Total Refusal Calls by Paramedic')
-ax1.set_xlabel('Paramedic')
-ax1.set_ylabel('Total Calls')
-plt.xticks(rotation=45, ha='right')
-st.pyplot(fig1)
+# Create DataFrames
+df_calls = pd.DataFrame({'Paramedic': paramedics, 'Total Calls': calls})
+df_pass = pd.DataFrame({'Paramedic': paramedics, 'Raw Pass Rate': raw_pass, 'Adjusted Pass Rate': adjusted_pass})
+df_monthly = pd.DataFrame(monthly_rates).T.reset_index().melt(id_vars='index', var_name='Month', value_name='Raw Pass Rate')
+df_monthly.columns = ['Paramedic', 'Month', 'Raw Pass Rate']
+df_audit = pd.DataFrame({
+    'Paramedic': audit_paramedics,
+    'Minimal to No Vitals': minimal,
+    '1 Vital Set': one_set,
+    '2 Vital Sets': two_sets
+})
+df_compliance = pd.DataFrame({'Paramedic': paramedics, 'Compliance Score': compliance_scores})
 
-# Chart 2: Raw and Adjusted Pass Rates
-fig2, ax2 = plt.subplots(figsize=(12, 6))
-x = np.arange(len(paramedics))
-width = 0.35
-ax2.bar(x - width/2, raw_pass, width, label='Raw Pass Rate', color='lightcoral')
-ax2.bar(x + width/2, adjusted_pass, width, label='Adjusted Pass Rate', color='lightgreen')
-ax2.set_title('Raw vs. Adjusted Pass Rates by Paramedic')
-ax2.set_xlabel('Paramedic')
-ax2.set_ylabel('Pass Rate (%)')
-ax2.set_xticks(x)
-ax2.set_xticklabels(paramedics, rotation=45, ha='right')
-ax2.legend()
-st.pyplot(fig2)
+# Sidebar filter
+selected = st.sidebar.multiselect("Select Paramedics", paramedics, default=paramedics)
 
-# Chart 3: Monthly Raw Pass Rate Trends
-fig3, ax3 = plt.subplots(figsize=(10, 6))
-months = ['January', 'February', 'March']
-for paramedic, rates in monthly_rates.items():
-    ax3.plot(months, rates, marker='o', label=paramedic)
-ax3.set_title('Monthly Raw Pass Rate Trends')
-ax3.set_xlabel('Month')
-ax3.set_ylabel('Raw Pass Rate (%)')
-ax3.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-st.pyplot(fig3)
+# Filtered data
+df_calls = df_calls[df_calls['Paramedic'].isin(selected)]
+df_pass = df_pass[df_pass['Paramedic'].isin(selected)]
+df_monthly = df_monthly[df_monthly['Paramedic'].isin(selected)]
+df_audit = df_audit[df_audit['Paramedic'].isin(selected)]
+df_compliance = df_compliance[df_compliance['Paramedic'].isin(selected)]
 
-# Chart 4: Manual Audit Outcomes
-fig4, ax4 = plt.subplots(figsize=(12, 6))
-ax4.bar(audit_paramedics, minimal, label='Minimal to No Vitals', color='salmon')
-ax4.bar(audit_paramedics, one_set, bottom=minimal, label='1 Vital Set', color='lightblue')
-ax4.bar(audit_paramedics, two_sets, bottom=np.array(minimal)+np.array(one_set), label='2 Vital Sets', color='lightgreen')
-ax4.set_title('Manual Audit Outcomes by Paramedic')
-ax4.set_xlabel('Paramedic')
-ax4.set_ylabel('Number of Audited Calls')
-plt.xticks(rotation=45, ha='right')
-ax4.legend()
-st.pyplot(fig4)
+# Chart 1: Total Calls
+fig1 = px.bar(df_calls, x='Paramedic', y='Total Calls', color='Total Calls', color_continuous_scale='Blues')
+st.plotly_chart(fig1, use_container_width=True)
+
+# Chart 2: Raw vs. Adjusted
+fig2 = go.Figure()
+fig2.add_trace(go.Bar(x=df_pass['Paramedic'], y=df_pass['Raw Pass Rate'], name='Raw Pass Rate', marker_color='crimson'))
+fig2.add_trace(go.Bar(x=df_pass['Paramedic'], y=df_pass['Adjusted Pass Rate'], name='Adjusted Pass Rate', marker_color='seagreen'))
+fig2.update_layout(barmode='group', title='Raw vs Adjusted Pass Rates', yaxis_title='Pass Rate (%)', xaxis_tickangle=45)
+st.plotly_chart(fig2, use_container_width=True)
+
+# Chart 3: Monthly Trend
+fig3 = px.line(df_monthly, x='Month', y='Raw Pass Rate', color='Paramedic', markers=True)
+fig3.update_layout(title='Monthly Raw Pass Rate Trends', yaxis_title='Raw Pass Rate (%)')
+st.plotly_chart(fig3, use_container_width=True)
+
+# Chart 4: Manual Audit
+fig4 = go.Figure()
+fig4.add_trace(go.Bar(x=df_audit['Paramedic'], y=df_audit['Minimal to No Vitals'], name='Minimal to No Vitals', marker_color='orangered'))
+fig4.add_trace(go.Bar(x=df_audit['Paramedic'], y=df_audit['1 Vital Set'], name='1 Vital Set', marker_color='dodgerblue'))
+fig4.add_trace(go.Bar(x=df_audit['Paramedic'], y=df_audit['2 Vital Sets'], name='2 Vital Sets', marker_color='mediumseagreen'))
+fig4.update_layout(barmode='stack', title='Manual Audit Results', yaxis_title='Audited Calls', xaxis_tickangle=45)
+st.plotly_chart(fig4, use_container_width=True)
 
 # Chart 5: Compliance Score
-fig5, ax5 = plt.subplots(figsize=(10, 6))
-ax5.bar(paramedics, compliance_scores, color='lightseagreen')
-ax5.set_title('Compliance Score by Paramedic')
-ax5.set_xlabel('Paramedic')
-ax5.set_ylabel('Compliance Score (%)')
-plt.xticks(rotation=45, ha='right')
-st.pyplot(fig5)
+fig5 = px.bar(df_compliance, x='Paramedic', y='Compliance Score', color='Compliance Score', color_continuous_scale='Teal')
+fig5.update_layout(title='Overall Compliance Score')
+st.plotly_chart(fig5, use_container_width=True)
+
+# Download option
+st.sidebar.download_button("Download Data CSV", df_pass.to_csv(index=False), "pass_rate_data.csv")
+Enhanced code with Plotly visuals and interactive filters
