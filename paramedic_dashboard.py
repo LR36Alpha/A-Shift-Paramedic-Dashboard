@@ -1,118 +1,81 @@
+
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-import numpy as np
 
-# Page config
+# Set Streamlit page configuration
 st.set_page_config(
-    page_title="Paramedic Refusal Compliance Dashboard",
+    page_title="🚒 Paramedic Performance Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Title
 st.title("🚒 Paramedic Performance Dashboard")
-st.markdown("This dashboard visualizes refusal-of-care vitals compliance performance across paramedics.")
+st.markdown("This dashboard displays refusal call compliance by paramedics, including raw pass rates, audit outcomes, and compliance scores.")
 
-st.markdown("⚠️ **Reminder**: Every refusal should include *two complete sets of vitals* unless explicitly refused by the patient. In those cases, refusal should be clearly documented.")
+# Data for the dashboard
+data = {
+    "Paramedic": [
+        "Cameron Conte", "Levi McGinnis", "Jake Dawson", "Joshua Salas",
+        "Courtney Rieke", "Kyle Schlatterer", "Reuben Ortiz", "Joshua Jacobs", "Derek Twardowski"
+    ],
+    "Total Calls": [55, 45, 35, 31, 27, 27, 25, 24, 16],
+    "Raw Pass Rate": [63.64, 51.11, 45.71, 35.48, 37.04, 40.74, 52.00, 29.17, 37.50],
+    "Adjusted Pass Rate": [100, 93.33, 68.57, 87.10, 88.89, 88.89, 68.00, 83.33, 81.25],
+    "Compliance Score": [74.55, 65.00, 62.00, 55.00, 60.00, 59.00, 50.00, 53.00, 54.00],
+    "Jan Pass Rate": [33.33, 30.77, 37.50, 28.57, 50.00, 0.00, 50.00, 44.44, 50.00],
+    "Feb Pass Rate": [80.95, 73.33, 45.45, 40.00, 22.22, 44.44, 50.00, 50.00, 33.33],
+    "Mar Pass Rate": [68.42, 47.06, 62.50, 41.67, 37.50, 41.18, 60.00, 9.09, 33.33]
+}
+
+df = pd.DataFrame(data)
 
 # Sidebar filters
-st.sidebar.header("🔍 Filter Options")
-
-paramedics = ['Cameron Conte', 'Levi McGinnis', 'Jake Dawson', 'Joshua Salas',
-              'Courtney Rieke', 'Kyle Schlatterer', 'Reuben Ortiz', 'Joshua Jacobs', 'Derek Twardowski']
-calls = [55, 45, 35, 31, 27, 27, 25, 24, 16]
-raw_pass = [63.64, 51.11, 45.71, 35.48, 37.04, 40.74, 52.00, 29.17, 37.50]
-adjusted_pass = [100, 93.33, 68.57, 87.10, 88.89, 88.89, 68.00, 83.33, 81.25]
-monthly_rates = {
-    'Cameron Conte': [33.33, 80.95, 68.42],
-    'Levi McGinnis': [30.77, 73.33, 47.06],
-    'Jake Dawson': [37.50, 45.45, 62.50],
-    'Joshua Salas': [28.57, 40.00, 41.67],
-    'Courtney Rieke': [50.00, 22.22, 37.50],
-    'Kyle Schlatterer': [0.00, 44.44, 41.18],
-    'Reuben Ortiz': [50.00, 50.00, 60.00],
-    'Joshua Jacobs': [44.44, 50.00, 9.09],
-    'Derek Twardowski': [50.00, 33.33, 33.33]
-}
-audit_paramedics = ['Joshua Salas', 'Courtney Rieke', 'Levi McGinnis', 'Jake Dawson',
-                    'Kyle Schlatterer', 'Joshua Jacobs', 'Reuben Ortiz', 'Cameron Conte',
-                    'Derek Twardowski', 'Joseph Katsiyannis']
-minimal = [21, 13, 18, 5, 12, 11, 9, 9, 7, 7]
-one_set = [1, 3, 0, 6, 0, 2, 1, 1, 0, 0]
-two_sets = [1, 3, 1, 6, 3, 2, 1, 1, 3, 2]
-compliance_scores = [74.55, 65, 62, 55, 60, 59, 50, 53, 54]
-
-# Assemble DataFrames
-df_calls = pd.DataFrame({'Paramedic': paramedics, 'Total Calls': calls})
-df_pass = pd.DataFrame({'Paramedic': paramedics, 'Raw Pass Rate': raw_pass, 'Adjusted Pass Rate': adjusted_pass})
-df_monthly = pd.DataFrame(monthly_rates).T.reset_index().melt(id_vars='index', var_name='Month', value_name='Raw Pass Rate')
-df_monthly.columns = ['Paramedic', 'Month', 'Raw Pass Rate']
-df_audit = pd.DataFrame({
-    'Paramedic': audit_paramedics,
-    'Minimal to No Vitals': minimal,
-    '1 Vital Set': one_set,
-    '2 Vital Sets': two_sets
-})
-df_compliance = pd.DataFrame({'Paramedic': paramedics, 'Compliance Score': compliance_scores})
-
-# Min call volume filter
-min_calls = st.sidebar.slider("Minimum Total Calls", min_value=0, max_value=max(calls), value=15)
-selected = st.sidebar.multiselect("Select Paramedics", paramedics, default=paramedics)
-
-# Filter data
-df_calls = df_calls[df_calls['Paramedic'].isin(selected) & (df_calls['Total Calls'] >= min_calls)]
-df_pass = df_pass[df_pass['Paramedic'].isin(df_calls['Paramedic'])]
-df_monthly = df_monthly[df_monthly['Paramedic'].isin(df_calls['Paramedic'])]
-df_audit = df_audit[df_audit['Paramedic'].isin(df_calls['Paramedic'])]
-df_compliance = df_compliance[df_compliance['Paramedic'].isin(df_calls['Paramedic'])]
-
-# Month dropdown
+st.sidebar.header("Filter Options")
+min_calls = st.sidebar.slider("Minimum Calls", min_value=0, max_value=60, value=15)
 selected_month = st.sidebar.selectbox("Select Month", ["January", "February", "March"])
-df_month_selected = df_monthly[df_monthly['Month'] == selected_month]
+month_col = {
+    "January": "Jan Pass Rate",
+    "February": "Feb Pass Rate",
+    "March": "Mar Pass Rate"
+}[selected_month]
+
+df_filtered = df[df["Total Calls"] >= min_calls]
 
 # Total Calls
-fig1 = px.bar(df_calls, x='Paramedic', y='Total Calls', color='Total Calls', color_continuous_scale='Blues')
-fig1.update_layout(title="Total Refusal Calls by Paramedic", xaxis_tickangle=45)
-st.plotly_chart(fig1, use_container_width=True)
+fig_calls = px.bar(df_filtered, x="Paramedic", y="Total Calls", color="Total Calls", color_continuous_scale="Blues")
+fig_calls.update_layout(title="Total Refusal Calls by Paramedic", xaxis_tickangle=45)
+st.plotly_chart(fig_calls, use_container_width=True)
 
 # Raw vs Adjusted
-fig2 = go.Figure()
-fig2.add_trace(go.Bar(x=df_pass['Paramedic'], y=df_pass['Raw Pass Rate'], name='Raw Pass Rate', marker_color='crimson'))
-fig2.add_trace(go.Bar(x=df_pass['Paramedic'], y=df_pass['Adjusted Pass Rate'], name='Adjusted Pass Rate', marker_color='seagreen'))
-fig2.update_layout(barmode='group', title='Raw vs Adjusted Pass Rates', yaxis_title='Pass Rate (%)', xaxis_tickangle=45)
-st.plotly_chart(fig2, use_container_width=True)
+fig_pass = go.Figure()
+fig_pass.add_trace(go.Bar(x=df_filtered["Paramedic"], y=df_filtered["Raw Pass Rate"], name="Raw", marker_color="crimson"))
+fig_pass.add_trace(go.Bar(x=df_filtered["Paramedic"], y=df_filtered["Adjusted Pass Rate"], name="Adjusted", marker_color="seagreen"))
+fig_pass.update_layout(barmode="group", title="Raw vs Adjusted Pass Rates", yaxis_title="%", xaxis_tickangle=45)
+st.plotly_chart(fig_pass, use_container_width=True)
 
-# Monthly trend
-fig3 = px.line(df_month_selected, x='Month', y='Raw Pass Rate', color='Paramedic', markers=True)
-fig3.update_layout(title=f'Monthly Raw Pass Rate – {selected_month}', yaxis_title='Raw Pass Rate (%)')
-st.plotly_chart(fig3, use_container_width=True)
-
-# Manual Audit
-fig4 = go.Figure()
-fig4.add_trace(go.Bar(x=df_audit['Paramedic'], y=df_audit['Minimal to No Vitals'], name='Minimal to No Vitals', marker_color='orangered'))
-fig4.add_trace(go.Bar(x=df_audit['Paramedic'], y=df_audit['1 Vital Set'], name='1 Vital Set', marker_color='dodgerblue'))
-fig4.add_trace(go.Bar(x=df_audit['Paramedic'], y=df_audit['2 Vital Sets'], name='2 Vital Sets', marker_color='mediumseagreen'))
-fig4.update_layout(barmode='stack', title='Manual Audit Results', yaxis_title='Audited Calls', xaxis_tickangle=45)
-st.plotly_chart(fig4, use_container_width=True)
-
-# Compliance Score – Sorted with Custom Color Gradient
-df_compliance_sorted = df_compliance.sort_values(by='Compliance Score', ascending=False)
-
-fig5 = px.bar(
-    df_compliance.sort_values(by='Compliance Score', ascending=False),
-    x='Paramedic',
-    y='Compliance Score',
-    color='Compliance Score',
-    color_continuous_scale=[[0.0, 'red'], [0.5, 'orange'], [1.0, 'navy']],
+# Compliance Score
+df_sorted = df_filtered.sort_values(by="Compliance Score", ascending=False)
+fig_compliance = px.bar(
+    df_sorted,
+    x="Paramedic", y="Compliance Score", color="Compliance Score",
+    color_continuous_scale=["navy", "darkblue", "blue", "dodgerblue", "skyblue", "orange", "red"],
+    title="Compliance Score (Sorted)"
 )
-fig5.update_layout(
-    title='Overall Compliance Score (High to Low)',
-    xaxis_tickangle=45
+fig_compliance.update_layout(xaxis_tickangle=45)
+st.plotly_chart(fig_compliance, use_container_width=True)
+
+# Monthly View
+fig_month = px.bar(
+    df_filtered.sort_values(by=month_col, ascending=False),
+    x="Paramedic", y=month_col, color=month_col,
+    color_continuous_scale="RdYlGn",
+    title=f"{selected_month} Raw Pass Rate"
 )
-st.plotly_chart(fig5, use_container_width=True)
+fig_month.update_layout(xaxis_tickangle=45)
+st.plotly_chart(fig_month, use_container_width=True)
 
 # Download
-st.sidebar.download_button("Download Data CSV", df_pass.to_csv(index=False), "pass_rate_data.csv")
-
+csv = df.to_csv(index=False)
+st.sidebar.download_button("Download Data as CSV", csv, "paramedic_summary.csv", "text/csv")
