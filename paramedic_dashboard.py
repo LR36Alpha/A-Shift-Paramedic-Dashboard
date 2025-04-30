@@ -82,7 +82,7 @@ df_manual_audit = pd.DataFrame({
 })
 
 # Filter only paramedics in current selection
-df_audit_filtered = df_manual_audit[df_manual_audit["Paramedic"].isin(df_calls["Paramedic"])]
+df_audit_filtered = df_manual_audit[df_manual_audit["Paramedic"].isin(df_filtered["Paramedic"])]
 
 # Manual Audit Stacked Bar Chart
 fig_audit = go.Figure()
