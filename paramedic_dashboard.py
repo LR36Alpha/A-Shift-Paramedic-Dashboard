@@ -105,7 +105,7 @@ fig5 = px.bar(
     x='Paramedic',
     y='Compliance Score',
     color='Compliance Score',
-    color_continuous_scale=['navy', 'skyblue', 'yellow', 'orangered', 'red'],
+    color_continuous_scale=['red', 'orangred', 'yellow', 'skyblue', 'navy'],
     title='Overall Compliance Score (Best → Worst)'
 )
 fig5.update_layout(xaxis_tickangle=45)
