@@ -56,7 +56,7 @@ fig_pass.update_layout(barmode="group", title="Raw vs Adjusted Pass Rates", yaxi
 st.plotly_chart(fig_pass, use_container_width=True)
 
 # Compliance Score
-df_sorted = df_filtered.sort_values(by="Compliance Score", descending=False)
+df_sorted = df_filtered.sort_values(by="Compliance Score", ascending=False)
 fig_compliance = px.bar(
     df_sorted,
     x="Paramedic", y="Compliance Score", color="Compliance Score",
