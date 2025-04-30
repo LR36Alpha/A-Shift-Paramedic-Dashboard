@@ -105,3 +105,4 @@ st.plotly_chart(fig5, use_container_width=True)
 
 # Download
 st.sidebar.download_button("Download Data CSV", df_pass.to_csv(index=False), "pass_rate_data.csv")
+Enhanced dashboard with interactivity, monthly filters, and annotations
