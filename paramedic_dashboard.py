@@ -101,14 +101,16 @@ st.plotly_chart(fig4, use_container_width=True)
 df_compliance_sorted = df_compliance.sort_values(by='Compliance Score', ascending=False)
 
 fig5 = px.bar(
-    df_compliance_sorted,
+    df_compliance.sort_values(by='Compliance Score', ascending=False),
     x='Paramedic',
     y='Compliance Score',
     color='Compliance Score',
-    color_continuous_scale=['red', 'orangred', 'yellow', 'skyblue', 'navy'],
-    title='Overall Compliance Score (Best → Worst)'
+    color_continuous_scale=[[0.0, 'red'], [0.5, 'orange'], [1.0, 'navy']],
 )
-fig5.update_layout(xaxis_tickangle=45)
+fig5.update_layout(
+    title='Overall Compliance Score (High to Low)',
+    xaxis_tickangle=45
+)
 st.plotly_chart(fig5, use_container_width=True)
 
 # Download
