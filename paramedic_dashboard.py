@@ -66,6 +66,19 @@ fig_compliance = px.bar(
 fig_compliance.update_layout(xaxis_tickangle=45)
 st.plotly_chart(fig_compliance, use_container_width=True)
 
+import plotly.express as px
+
+# Assuming 'df_manual_audit' is your DataFrame containing manual audit data
+fig_manual_audit = px.bar(
+    df_manual_audit,
+    x="Paramedic",
+    y="Audit Outcome Count",
+    color="Audit Outcome",
+    title="Manual Audit Outcomes by Paramedic"
+)
+fig_manual_audit.update_layout(xaxis_tickangle=45)
+st.plotly_chart(fig_manual_audit, use_container_width=True)
+
 # Monthly View
 fig_month = px.bar(
     df_filtered.sort_values(by=month_col, ascending=False),
