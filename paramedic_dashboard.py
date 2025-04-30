@@ -60,8 +60,8 @@ df_sorted = df_filtered.sort_values(by="Compliance Score", ascending=False)
 fig_compliance = px.bar(
     df_sorted,
     x="Paramedic", y="Compliance Score", color="Compliance Score",
-    color_continuous_scale=["navy", "darkblue", "blue", "dodgerblue", "skyblue", "orange", "red"],
-    title="Compliance Score (Sorted)"
+    color_continuous_scale=px.colors.sequential.Bluered_r,
+    title="Compliance Score (High = Blue, Low = Red)"
 )
 fig_compliance.update_layout(xaxis_tickangle=45)
 st.plotly_chart(fig_compliance, use_container_width=True)
